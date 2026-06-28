@@ -1,0 +1,17 @@
+# Replit configuration for NS Content OS (Next.js 16)
+modules = ["nodejs-20"]
+
+# Dev server. Next binds 0.0.0.0:3000, which Replit maps to the public URL.
+run = "npm run dev"
+
+[env]
+NEXT_TELEMETRY_DISABLED = "1"
+
+[[ports]]
+localPort = 3000
+externalPort = 80
+
+[deployment]
+deploymentTarget = "autoscale"
+build = ["npm", "run", "build"]
+run = ["npm", "run", "start"]
