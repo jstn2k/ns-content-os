@@ -6,7 +6,7 @@ import { getAccountPillars, getPostsForCategorization, saveCategorizations } fro
 import { logError } from '@/lib/db/logs';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300;
+export const maxDuration = 60;
 
 export async function POST() {
   const primary = await getPrimaryAccount();

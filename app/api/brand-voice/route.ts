@@ -7,7 +7,7 @@ import { loadAccountAnalysis } from '@/lib/analysis/load';
 import { logError } from '@/lib/db/logs';
 
 export const runtime = 'nodejs';
-export const maxDuration = 120;
+export const maxDuration = 60;
 
 export async function POST() {
   const primary = await getPrimaryAccount();

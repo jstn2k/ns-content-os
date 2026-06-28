@@ -4,7 +4,7 @@ import { importHistory } from '@/lib/instagram/import';
 import { logError } from '@/lib/db/logs';
 
 export const runtime = 'nodejs';
-export const maxDuration = 300; // imports can take a while; long-running route
+export const maxDuration = 60; // Vercel Hobby cap; large accounts may need re-runs
 
 export async function POST() {
   const primary = await getPrimaryAccount();

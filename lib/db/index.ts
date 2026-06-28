@@ -5,11 +5,10 @@ import * as schema from './schema';
 /**
  * Single shared postgres.js client + Drizzle instance.
  *
- * We connect through the Supabase "Session pooler" (port 5432), which supports
- * prepared statements. If you later switch DATABASE_URL to the Transaction
- * pooler (port 6543) for serverless, set `prepare: false` below.
- *
- * A global singleton avoids exhausting connections during Next.js hot reload.
+ * `prepare: false` + a small pool make this safe behind either Supabase pooler.
+ * For serverless (Vercel) use the **Transaction pooler** URL (port 6543); for
+ * local dev / long-lived servers the Session pooler (5432) is fine. A global
+ * singleton avoids exhausting connections during hot reload and warm invocations.
  */
 const connectionString = process.env.DATABASE_URL;
 if (!connectionString) {
@@ -24,7 +23,9 @@ const client =
   globalForDb.__pgClient ??
   postgres(connectionString, {
     ssl: 'require',
-    max: 10,
+    prepare: false,
+    max: 3,
+    idle_timeout: 20,
   });
 
 if (process.env.NODE_ENV !== 'production') {

@@ -14,8 +14,10 @@ export type ImportSummary = {
   errors: number;
 };
 
-/** Only fetch per-media insights for the most recent N posts (rate-limit safety). */
-const INSIGHTS_CAP = 120;
+/** Only fetch per-media insights for the most recent N posts (rate-limit + 60s-budget safety). */
+const INSIGHTS_CAP = 50;
+/** Cap total media per run so a synchronous import fits the serverless time budget. */
+const MEDIA_CAP = 250;
 
 /**
  * Import the account's historical media into the database. Media URLs are stored
@@ -30,7 +32,7 @@ export async function importHistory(igAccountId: string): Promise<ImportSummary>
   if (!token) throw new Error('No access token for account');
 
   const canInsights = (account.scopes ?? []).includes('instagram_business_manage_insights');
-  const media = await fetchAllMedia(token);
+  const media = await fetchAllMedia(token, MEDIA_CAP);
 
   let upserted = 0;
   let withInsights = 0;
