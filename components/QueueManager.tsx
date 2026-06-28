@@ -134,12 +134,16 @@ function QueueRow({
   pillars,
   onPatch,
   onDelete,
+  onPublish,
+  canPublish,
   busy,
 }: {
   item: ClientQueueItem;
   pillars: Pillar[];
   onPatch: (id: string, body: Record<string, unknown>) => void;
   onDelete: (id: string) => void;
+  onPublish: (id: string) => void;
+  canPublish: boolean;
   busy: boolean;
 }) {
   const [editing, setEditing] = useState(false);
@@ -156,6 +160,11 @@ function QueueRow({
           <p className="mt-1 truncate text-sm text-muted-foreground">{item.caption || '(no caption yet)'}</p>
           <p className="mt-0.5 text-xs text-muted-foreground">{fmt(item.scheduledAtISO)}</p>
           {item.rhythmExplanation && <p className="mt-0.5 text-xs text-muted-foreground italic">{item.rhythmExplanation}</p>}
+          {item.publishedPermalink && (
+            <a href={item.publishedPermalink} target="_blank" rel="noopener noreferrer" className="mt-0.5 inline-block text-xs text-accent underline">
+              View on Instagram ↗
+            </a>
+          )}
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1.5">
           <div className="flex gap-1.5">
@@ -174,6 +183,9 @@ function QueueRow({
             )}
             {item.status === 'scheduled' && (
               <Button size="sm" variant="outline" onClick={() => onPatch(item.id, { status: 'approved' })} disabled={busy}>Unschedule</Button>
+            )}
+            {canPublish && (item.status === 'approved' || item.status === 'scheduled') && (
+              <Button size="sm" onClick={() => onPublish(item.id)} disabled={busy}>Publish now</Button>
             )}
             <Button size="sm" variant="ghost" onClick={() => setEditing((v) => !v)}>{editing ? 'Close' : 'Edit'}</Button>
             <Button size="sm" variant="destructive" onClick={() => onDelete(item.id)} disabled={busy}>Delete</Button>
@@ -206,6 +218,7 @@ export function QueueManager({
   warnings,
   publishingMode,
   isRealRecs,
+  canPublish,
 }: {
   items: ClientQueueItem[];
   pillars: Pillar[];
@@ -213,6 +226,7 @@ export function QueueManager({
   warnings: string[];
   publishingMode: string;
   isRealRecs: boolean;
+  canPublish: boolean;
 }) {
   const router = useRouter();
   const [busy, setBusy] = useState<string | null>(null);
@@ -253,6 +267,13 @@ export function QueueManager({
     setBusy(null);
     if (ok) router.refresh();
   }
+  async function publish(id: string) {
+    if (!confirm('Publish this post to Instagram now? This is a live action.')) return;
+    setBusy(id);
+    const ok = await call(`/api/publish/${id}`, 'POST');
+    setBusy(null);
+    if (ok) router.refresh();
+  }
   async function addFromRec(rec: ClientRec) {
     setBusy(`rec-${rec.order}`);
     const ok = await call('/api/queue', 'POST', { categoryKey: rec.pillarKey, status: 'draft', rhythmExplanation: rec.reason });
@@ -287,7 +308,16 @@ export function QueueManager({
             </p>
           ) : (
             items.map((item) => (
-              <QueueRow key={item.id} item={item} pillars={pillars} onPatch={patch} onDelete={remove} busy={busy === item.id} />
+              <QueueRow
+                key={item.id}
+                item={item}
+                pillars={pillars}
+                onPatch={patch}
+                onDelete={remove}
+                onPublish={publish}
+                canPublish={canPublish}
+                busy={busy === item.id}
+              />
             ))
           )}
         </CardContent>

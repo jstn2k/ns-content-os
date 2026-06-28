@@ -7,6 +7,7 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/instagram/deauthorize',
   '/api/auth/instagram/data-deletion',
+  '/api/cron', // secured by CRON_SECRET, not the session
 ];
 
 function isPublic(pathname: string): boolean {

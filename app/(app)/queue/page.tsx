@@ -47,6 +47,7 @@ export default async function QueuePage() {
       }));
 
   const settings = account ? await getAppSettings(account.id) : null;
+  const canPublish = (account?.scopes ?? []).includes('instagram_business_content_publish');
 
   return (
     <div>
@@ -61,6 +62,7 @@ export default async function QueuePage() {
         warnings={rhythm?.warnings ?? []}
         publishingMode={settings?.publishingMode ?? 'approval'}
         isRealRecs={Boolean(rhythm)}
+        canPublish={canPublish}
       />
     </div>
   );
