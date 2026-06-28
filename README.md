@@ -27,9 +27,9 @@ template ship by default), so the same codebase serves different brands.
 | 5 | AI: categorization + Brand Voice Profile | ✅ Done |
 | 6 | Posting rhythm engine | ✅ Done |
 | 7 | Caption generator | ✅ Done |
-| 8 | Content queue + approval workflow | ⬜ Next |
-| 9 | Publishing worker (containers, polling, retries) | ⬜ Planned |
-| 10 | Analytics dashboard + logs | ⬜ Planned |
+| 8 | Content queue + approval workflow | ✅ Done |
+| 9 | Publishing worker (containers, polling, retries) | ✅ Done |
+| 10 | Analytics dashboard + logs | ✅ Done |
 
 MVP target: Phases 0–7 ("Insight MVP"), then 8–10.
 

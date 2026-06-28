@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getPrimaryAccount } from '@/lib/db/accounts';
 import { getRecentPosts } from '@/lib/db/posts';
+import { listQueueItems } from '@/lib/db/queue';
 import { loadAccountAnalysis } from '@/lib/analysis/load';
 import { loadRhythm } from '@/lib/rhythm/load';
 import { PageHeader } from '@/components/ui/page-header';
@@ -11,7 +12,7 @@ import { buttonClasses } from '@/components/ui/button';
 import { PreviewBanner } from '@/components/ui/preview-banner';
 import { StatusBadge } from '@/components/StatusBadge';
 import { cn, formatDateTime } from '@/lib/utils';
-import { mockKpis, mockRecommendations, mockQueue, mockPosts } from '@/lib/mock/data';
+import { mockKpis, mockRecommendations, mockQueue, mockPosts, type MockQueueStatus } from '@/lib/mock/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,12 @@ export default async function DashboardPage() {
   const dashRecs = rhythm
     ? rhythm.recommendations.slice(0, 4).map((r) => ({ key: String(r.order), label: r.pillarLabel, day: r.day, time: r.time, confidence: r.confidence }))
     : mockRecommendations.slice(0, 4).map((r) => ({ key: String(r.order), label: r.pillar, day: r.day, time: r.time, confidence: r.confidence }));
+
+  const queue = connected && account ? await listQueueItems(account.id) : [];
+  const queueCounts = { draft: 0, needs_review: 0, approved: 0, scheduled: 0 } as Record<string, number>;
+  for (const q of queue) if (q.status in queueCounts) queueCounts[q.status] += 1;
+  const upcoming = queue.filter((q) => q.status === 'scheduled' && q.scheduledAt).slice(0, 4);
+  const hasQueue = queue.length > 0;
 
   return (
     <div>
@@ -73,6 +80,15 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {connected && (
+        <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <StatTile label="Drafts" value={queueCounts.draft} />
+          <StatTile label="Needs review" value={queueCounts.needs_review} />
+          <StatTile label="Approved" value={queueCounts.approved} />
+          <StatTile label="Scheduled" value={queueCounts.scheduled} />
+        </div>
+      )}
+
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         {/* Recommended next posts — real rhythm when data allows */}
         <Card>
@@ -96,19 +112,40 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Upcoming queue — still sample */}
+        {/* Upcoming queue — real when items exist */}
         <Card>
-          <CardHeader><CardTitle>Upcoming in queue <span className="ml-1 text-xs font-normal text-muted-foreground">(sample)</span></CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>
+              Upcoming in queue
+              {!hasQueue && <span className="ml-1 text-xs font-normal text-muted-foreground">(sample)</span>}
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {mockQueue.slice(0, 4).map((q) => (
-              <div key={q.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{q.pillar}</p>
-                  <p className="text-xs text-muted-foreground">{formatDateTime(q.scheduledAt)}</p>
+            {hasQueue ? (
+              upcoming.length > 0 ? (
+                upcoming.map((q) => (
+                  <div key={q.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{q.categoryLabel ?? 'Post'}</p>
+                      <p className="text-xs text-muted-foreground">{q.scheduledAt ? formatDateTime(q.scheduledAt) : 'Not scheduled'}</p>
+                    </div>
+                    <StatusBadge status={q.status as MockQueueStatus} />
+                  </div>
+                ))
+              ) : (
+                <p className="py-4 text-sm text-muted-foreground">No scheduled posts yet — approve and schedule from the Queue.</p>
+              )
+            ) : (
+              mockQueue.slice(0, 4).map((q) => (
+                <div key={q.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{q.pillar}</p>
+                    <p className="text-xs text-muted-foreground">{formatDateTime(q.scheduledAt)}</p>
+                  </div>
+                  <StatusBadge status={q.status} />
                 </div>
-                <StatusBadge status={q.status} />
-              </div>
-            ))}
+              ))
+            )}
             <Link href="/calendar" className={cn(buttonClasses('outline', 'sm'), 'w-full')}>Open calendar</Link>
           </CardContent>
         </Card>
