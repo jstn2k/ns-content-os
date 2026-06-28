@@ -93,6 +93,10 @@ export async function upsertAccountWithToken(input: UpsertInput): Promise<string
   return account.id;
 }
 
+export async function getAppSettings(igAccountId: string) {
+  return db.query.appSettings.findFirst({ where: eq(appSettings.igAccountId, igAccountId) });
+}
+
 export async function ensureAppSettings(igAccountId: string): Promise<void> {
   const existing = await db.query.appSettings.findFirst({
     where: eq(appSettings.igAccountId, igAccountId),
