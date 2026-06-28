@@ -1,5 +1,6 @@
 import { getPrimaryAccount } from '@/lib/db/accounts';
 import DisconnectButton from '@/components/DisconnectButton';
+import { CapabilitiesPanel } from '@/components/CapabilitiesPanel';
 
 export const dynamic = 'force-dynamic';
 
@@ -94,6 +95,8 @@ export default async function ConnectPage({
           </div>
         )}
       </div>
+
+      {connected && <CapabilitiesPanel />}
 
       <p className="text-xs text-zinc-400">
         We use official Instagram Login only. Tokens are encrypted at rest and never shared. You can
