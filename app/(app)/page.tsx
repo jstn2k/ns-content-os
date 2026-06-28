@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getPrimaryAccount } from '@/lib/db/accounts';
 import { getRecentPosts } from '@/lib/db/posts';
 import { loadAccountAnalysis } from '@/lib/analysis/load';
+import { loadRhythm } from '@/lib/rhythm/load';
 import { PageHeader } from '@/components/ui/page-header';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { StatTile } from '@/components/ui/stat';
@@ -21,7 +22,12 @@ export default async function DashboardPage() {
 
   const result = connected && account ? await loadAccountAnalysis(account.id) : null;
   const recent = connected && account ? await getRecentPosts(account.id, 5) : [];
+  const rhythm = connected && account ? await loadRhythm(account.id) : null;
   const hasReal = Boolean(result);
+
+  const dashRecs = rhythm
+    ? rhythm.recommendations.slice(0, 4).map((r) => ({ key: String(r.order), label: r.pillarLabel, day: r.day, time: r.time, confidence: r.confidence }))
+    : mockRecommendations.slice(0, 4).map((r) => ({ key: String(r.order), label: r.pillar, day: r.day, time: r.time, confidence: r.confidence }));
 
   return (
     <div>
@@ -68,14 +74,19 @@ export default async function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {/* Recommended next posts — still sample (rhythm engine is a later phase) */}
+        {/* Recommended next posts — real rhythm when data allows */}
         <Card>
-          <CardHeader><CardTitle>Recommended next posts <span className="ml-1 text-xs font-normal text-muted-foreground">(sample)</span></CardTitle></CardHeader>
+          <CardHeader>
+            <CardTitle>
+              Recommended next posts
+              {!rhythm && <span className="ml-1 text-xs font-normal text-muted-foreground">(sample)</span>}
+            </CardTitle>
+          </CardHeader>
           <CardContent className="space-y-3">
-            {mockRecommendations.slice(0, 4).map((r) => (
-              <div key={r.order} className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+            {dashRecs.map((r) => (
+              <div key={r.key} className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
                 <div>
-                  <p className="text-sm font-medium">{r.pillar}</p>
+                  <p className="text-sm font-medium">{r.label}</p>
                   <p className="text-xs text-muted-foreground">{r.day} · {r.time}</p>
                 </div>
                 <Badge variant="accent">{Math.round(r.confidence * 100)}%</Badge>

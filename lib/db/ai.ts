@@ -122,6 +122,19 @@ export async function saveBrandVoiceProfile(
   });
 }
 
+/** Labels of recently-posted pillars (newest first) for the rhythm engine. */
+export async function getRecentCategorizedPillars(igAccountId: string, limit = 10): Promise<string[]> {
+  const rows = await db
+    .select({ label: contentCategories.label })
+    .from(mediaPosts)
+    .innerJoin(postCategorizations, eq(postCategorizations.mediaPostId, mediaPosts.id))
+    .innerJoin(contentCategories, eq(contentCategories.id, postCategorizations.categoryId))
+    .where(eq(mediaPosts.igAccountId, igAccountId))
+    .orderBy(sql`${mediaPosts.postedAt} desc nulls last`)
+    .limit(limit);
+  return rows.map((r) => r.label);
+}
+
 /** Pillar distribution from stored categorizations (for the Analysis screen). */
 export async function getPillarDistribution(igAccountId: string) {
   const rows = await db
