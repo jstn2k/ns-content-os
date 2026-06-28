@@ -1,6 +1,9 @@
 import { getPrimaryAccount } from '@/lib/db/accounts';
+import { getImportedPostCount } from '@/lib/db/posts';
 import DisconnectButton from '@/components/DisconnectButton';
 import { CapabilitiesPanel } from '@/components/CapabilitiesPanel';
+import { ImportButton } from '@/components/ImportButton';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,6 +25,7 @@ export default async function ConnectPage({
   const primary = await getPrimaryAccount();
   const account = primary?.account;
   const connected = account?.status === 'connected' && primary?.hasToken;
+  const postCount = connected && account ? await getImportedPostCount(account.id) : 0;
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
@@ -97,6 +101,32 @@ export default async function ConnectPage({
       </div>
 
       {connected && <CapabilitiesPanel />}
+
+      {connected && account && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Historical import</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+              <span className="text-muted-foreground">
+                Imported posts: <span className="font-medium text-foreground">{postCount}</span>
+              </span>
+              <span className="text-muted-foreground">
+                Last synced:{' '}
+                <span className="font-medium text-foreground">
+                  {account.lastSyncedAt ? new Date(account.lastSyncedAt).toLocaleString() : '—'}
+                </span>
+              </span>
+            </div>
+            <ImportButton hasPosts={postCount > 0} />
+            <p className="text-xs text-muted-foreground">
+              Pulls your posts, captions, hashtags, mentions, CTAs, and available insights from the
+              official API. Thumbnail re-hosting is added once Supabase Storage keys are set.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       <p className="text-xs text-zinc-400">
         We use official Instagram Login only. Tokens are encrypted at rest and never shared. You can
