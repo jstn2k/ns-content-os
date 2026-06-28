@@ -9,9 +9,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session) redirect('/login');
 
   return (
-    <div className="flex min-h-full flex-1 flex-col bg-zinc-50 dark:bg-black">
+    <div className="flex min-h-full flex-1">
       <Nav />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8">{children}</main>
+      <div className="flex min-h-full flex-1 flex-col">
+        <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">{children}</main>
+      </div>
     </div>
   );
 }

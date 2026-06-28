@@ -1,5 +1,14 @@
 import Link from 'next/link';
 import { getPrimaryAccount } from '@/lib/db/accounts';
+import { PageHeader } from '@/components/ui/page-header';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { StatTile } from '@/components/ui/stat';
+import { Badge } from '@/components/ui/badge';
+import { buttonClasses } from '@/components/ui/button';
+import { PreviewBanner } from '@/components/ui/preview-banner';
+import { StatusBadge } from '@/components/StatusBadge';
+import { cn, formatDateTime } from '@/lib/utils';
+import { mockKpis, mockRecommendations, mockQueue, mockPosts } from '@/lib/mock/data';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,59 +17,108 @@ export default async function DashboardPage() {
   const connected = primary?.account.status === 'connected' && primary.hasToken;
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Your Instagram content intelligence & publishing workspace.
-        </p>
-      </div>
+    <div>
+      <PageHeader title="Dashboard" description="Your Instagram content intelligence & publishing workspace." />
 
-      <div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-950">
-        <h2 className="text-sm font-medium text-zinc-500">Account status</h2>
-        {connected ? (
-          <div className="mt-2">
-            <p className="text-lg font-semibold">
-              Connected{primary?.account.username ? ` · @${primary.account.username}` : ''}
-            </p>
-            <p className="mt-1 text-sm text-zinc-500">
-              You&apos;re ready to import history and analyze your posting rhythm (coming next).
-            </p>
+      {/* Connection status — real */}
+      <Card className="mb-6 p-5">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Account status</p>
+            {connected ? (
+              <p className="mt-1 text-lg font-semibold">
+                Connected{primary?.account.username ? ` · @${primary.account.username}` : ''}
+              </p>
+            ) : (
+              <p className="mt-1 text-lg font-semibold">No account connected</p>
+            )}
           </div>
-        ) : (
-          <div className="mt-2">
-            <p className="text-lg font-semibold">No account connected</p>
-            <p className="mt-1 text-sm text-zinc-500">
-              Connect your Instagram Professional account to get started.
-            </p>
-            <Link
-              href="/connect"
-              className="mt-4 inline-flex h-10 items-center rounded-lg bg-zinc-900 px-4 text-sm font-medium text-white hover:bg-zinc-700 dark:bg-white dark:text-black dark:hover:bg-zinc-200"
-            >
+          {connected ? (
+            <Badge variant="success">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" /> Connected
+            </Badge>
+          ) : (
+            <Link href="/connect" className={buttonClasses('primary', 'md')}>
               Connect account
             </Link>
-          </div>
-        )}
+          )}
+        </div>
+      </Card>
+
+      <PreviewBanner note="Sample analytics below — these become live once history import + analysis are wired." />
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <StatTile label="Posts analyzed" value={mockKpis.postsAnalyzed} sub="last 12 months" />
+        <StatTile label="Avg posts / week" value={mockKpis.avgPostsPerWeek} sub="current cadence" />
+        <StatTile label="Top pillar" value={<span className="text-base">{mockKpis.topPillar}</span>} sub="by volume" />
+        <StatTile label="Best window" value={mockKpis.bestWindow} sub="highest engagement" />
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        {[
-          { title: 'Historical import', desc: 'Pull your past posts & metrics' },
-          { title: 'Brand voice profile', desc: 'Learn your tone, hooks & pillars' },
-          { title: 'Posting rhythm', desc: 'Recommend what to post next' },
-        ].map((c) => (
-          <div
-            key={c.title}
-            className="rounded-xl border border-dashed border-zinc-300 bg-white/50 p-5 dark:border-zinc-700 dark:bg-zinc-900/40"
-          >
-            <p className="font-medium">{c.title}</p>
-            <p className="mt-1 text-sm text-zinc-500">{c.desc}</p>
-            <span className="mt-3 inline-block rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-500 dark:bg-zinc-800">
-              Coming next
-            </span>
-          </div>
-        ))}
+      <div className="mt-6 grid gap-6 lg:grid-cols-2">
+        {/* Recommended next posts */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Recommended next posts</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mockRecommendations.slice(0, 4).map((r) => (
+              <div key={r.order} className="flex items-start justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                <div>
+                  <p className="text-sm font-medium">{r.pillar}</p>
+                  <p className="text-xs text-muted-foreground">{r.day} · {r.time}</p>
+                </div>
+                <Badge variant="accent">{Math.round(r.confidence * 100)}%</Badge>
+              </div>
+            ))}
+            <Link href="/queue" className={cn(buttonClasses('outline', 'sm'), 'w-full')}>
+              View full plan
+            </Link>
+          </CardContent>
+        </Card>
+
+        {/* Upcoming queue */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Upcoming in queue</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {mockQueue.slice(0, 4).map((q) => (
+              <div key={q.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{q.pillar}</p>
+                  <p className="text-xs text-muted-foreground">{formatDateTime(q.scheduledAt)}</p>
+                </div>
+                <StatusBadge status={q.status} />
+              </div>
+            ))}
+            <Link href="/calendar" className={cn(buttonClasses('outline', 'sm'), 'w-full')}>
+              Open calendar
+            </Link>
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Recent posts */}
+      <Card className="mt-6">
+        <CardHeader>
+          <CardTitle>Recent posts</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {mockPosts.slice(0, 5).map((p) => (
+            <div key={p.id} className="flex items-center justify-between gap-3 border-b border-border pb-3 last:border-0 last:pb-0">
+              <div className="min-w-0">
+                <p className="truncate text-sm">{p.caption}</p>
+                <p className="text-xs text-muted-foreground">{p.pillar} · {formatDateTime(p.date)}</p>
+              </div>
+              <div className="flex shrink-0 items-center gap-2">
+                <Badge variant="outline">{p.type}</Badge>
+                <span className="text-xs text-muted-foreground">{p.likes.toLocaleString()} likes</span>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }
