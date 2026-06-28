@@ -7,20 +7,38 @@ import { PreviewBanner } from '@/components/ui/preview-banner';
 import { cn } from '@/lib/utils';
 import { getPrimaryAccount } from '@/lib/db/accounts';
 import { loadAccountAnalysis } from '@/lib/analysis/load';
+import { getPillarDistribution } from '@/lib/db/ai';
+import { isAiConfigured } from '@/lib/ai';
+import { AiActionButton } from '@/components/AiActionButton';
 import type { AnalysisResult } from '@/lib/analysis/engine';
 import { mockPillars, mockFormatRatios, mockBestTimes, mockKpis } from '@/lib/mock/data';
 
 export const dynamic = 'force-dynamic';
 
+type Distribution = { key: string; label: string; count: number; share: number }[];
+
 export default async function AnalysisPage() {
   const primary = await getPrimaryAccount();
   const result = primary?.account ? await loadAccountAnalysis(primary.account.id) : null;
-  return result ? <RealAnalysis result={result} /> : <MockAnalysis />;
+  const distribution = primary?.account && result ? await getPillarDistribution(primary.account.id) : [];
+  return result ? (
+    <RealAnalysis result={result} distribution={distribution} aiReady={isAiConfigured()} />
+  ) : (
+    <MockAnalysis />
+  );
 }
 
 /* ----------------------------- Real (live data) ----------------------------- */
 
-function RealAnalysis({ result }: { result: AnalysisResult }) {
+function RealAnalysis({
+  result,
+  distribution,
+  aiReady,
+}: {
+  result: AnalysisResult;
+  distribution: Distribution;
+  aiReady: boolean;
+}) {
   const maxScore = Math.max(...result.bestWindows.map((b) => b.score), 0.0001);
   const maxWeekday = Math.max(...result.byWeekday.map((d) => d.count), 1);
 
@@ -122,9 +140,40 @@ function RealAnalysis({ result }: { result: AnalysisResult }) {
         </CardContent>
       </Card>
 
-      <p className="mt-4 text-xs text-muted-foreground">
-        Pillar distribution and best-performing pillars appear after categorization (next phase).
-      </p>
+      {distribution.length > 0 ? (
+        <Card className="mt-6">
+          <CardHeader><CardTitle>Content pillar distribution</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {distribution.slice(0, 8).map((d) => (
+              <Bar
+                key={d.key}
+                label={d.label}
+                value={d.share}
+                max={Math.max(...distribution.map((x) => x.share))}
+                hint={`${Math.round(d.share * 100)}% · ${d.count}`}
+              />
+            ))}
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="mt-6">
+          <CardHeader><CardTitle>Content pillar distribution</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Run AI categorization to break your posts down by content pillar.
+            </p>
+            <AiActionButton
+              endpoint="/api/categorize"
+              label="Run AI categorization"
+              loadingLabel="Categorizing…"
+              variant="outline"
+              size="sm"
+              successMessage={(j) => `Categorized ${j.categorized as number} of ${j.total as number} posts.`}
+              note={aiReady ? undefined : 'Needs ANTHROPIC_API_KEY + imported posts'}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
