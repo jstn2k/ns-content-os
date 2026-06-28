@@ -21,13 +21,13 @@ template ship by default), so the same codebase serves different brands.
 |------|-------|-------|
 | 0 | Project setup (Next.js, Tailwind, Drizzle, Supabase) | ✅ Done |
 | 1 | Admin login + Instagram OAuth connect/disconnect + token encryption | ✅ Done |
-| 2 | API capability check (what the account/permissions allow) | ⬜ Next |
-| 3 | Historical media import (posts + metrics + caption parsing) | ⬜ Planned |
-| 4 | Deterministic analysis (cadence, lengths, frequencies, ratios) | ⬜ Planned |
-| 5 | AI: categorization + Brand Voice Profile | ⬜ Planned |
-| 6 | Posting rhythm engine | ⬜ Planned |
-| 7 | Caption generator | ⬜ Planned |
-| 8 | Content queue + approval workflow | ⬜ Planned |
+| 2 | API capability check (what the account/permissions allow) | ✅ Done |
+| 3 | Historical media import (posts + metrics + caption parsing) | ✅ Done |
+| 4 | Deterministic analysis (cadence, lengths, frequencies, ratios) | ✅ Done |
+| 5 | AI: categorization + Brand Voice Profile | ✅ Done |
+| 6 | Posting rhythm engine | ✅ Done |
+| 7 | Caption generator | ✅ Done |
+| 8 | Content queue + approval workflow | ⬜ Next |
 | 9 | Publishing worker (containers, polling, retries) | ⬜ Planned |
 | 10 | Analytics dashboard + logs | ⬜ Planned |
 
